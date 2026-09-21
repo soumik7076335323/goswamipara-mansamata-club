@@ -1,0 +1,9 @@
+{
+  "short_name": "গোস্বামীপাড়া মনসামাতা ক্লাব",
+  "name": "গোস্বামীপাড়া মনসামাতা ক্লাব | Goswamipara Mansa Mata Club",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#9e1b1b",
+  "background_color": "#faf5ea"
+}

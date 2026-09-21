@@ -1,0 +1,32 @@
+# dependencies
+node_modules/
+*/node_modules/
+
+# environment / secrets
+.env
+.env.local
+.env.*.local
+
+# uploads (local media) — keep the folder, ignore content
+server/uploads/*
+!server/uploads/.gitkeep
+
+# builds
+client/build/
+build/
+dist/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# caches / OS
+.DS_Store
+.cache/
+Thumbs.db
+
+# test artifacts
+tests/artifacts/
+coverage/
