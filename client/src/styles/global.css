@@ -464,7 +464,7 @@ html[lang="en"] .brand-name {
   color: var(--vermilion);
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 860px) {
   .main-nav {
     display: none;
   }
@@ -2133,4 +2133,177 @@ html[lang="en"] .count-cell b {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* =========================================================
+   MOBILE CARD FIX
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .container {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .grid,
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    width: 100%;
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .card-body {
+    padding: 15px 16px 17px;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .card-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .card-meta {
+    font-size: 0.78rem;
+    gap: 6px 10px;
+  }
+
+  /* Committee / Person cards */
+  .person-card {
+    width: 100%;
+    padding: 22px 16px 20px;
+  }
+
+  .person-card .card-title {
+    width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .person-bio-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .person-card .bio {
+    width: 100%;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Prevent long Bengali text from overflowing */
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  span,
+  a {
+    max-width: 100%;
+  }
+
+  /* Header */
+  .site-header .container {
+    gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .brand {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .brand-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .brand-name {
+    font-size: 0.95rem;
+  }
+
+  .brand-sub {
+    font-size: 0.65rem;
+  }
+
+  .lang-switch button {
+    padding: 5px 9px;
+    font-size: 0.75rem;
+  }
+
+  .nav-toggle {
+    padding: 6px;
+  }
+
+  /* Mobile menu */
+  .mobile-menu {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .mobile-menu a {
+    padding: 12px 6px;
+    font-size: 0.92rem;
+  }
+
+  /* Buttons */
+  .btn {
+    max-width: 100%;
+  }
+
+  .hero-ctas {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-ctas .btn {
+    width: 100%;
+  }
+
+  /* Notice */
+  .notice-item {
+    gap: 10px;
+    padding: 14px 4px;
+  }
+
+  .notice-item h3 {
+    font-size: 0.98rem;
+  }
+
+  /* Schedule */
+  .schedule-item {
+    padding: 15px;
+  }
+
+  /* Footer */
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Prevent horizontal scrolling */
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
 }
