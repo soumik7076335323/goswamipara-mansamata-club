@@ -39,7 +39,30 @@ export function Img({
       return "";
     }
 
-    // Already a complete URL.
+    const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+    /*
+     * Existing MongoDB records may contain absolute local URLs such as:
+     * http://localhost:5000/uploads/file.jpg
+     *
+     * In production those must point to the Render backend instead.
+     * REACT_APP_API_URL is:
+     *   Local      -> http://localhost:5000
+     *   Production -> https://goswamipara-mansamata-club.onrender.com
+     */
+    if (
+      trimmed.startsWith("http://localhost:5000/") ||
+      trimmed.startsWith("http://127.0.0.1:5000/")
+    ) {
+      const uploadPath = trimmed.replace(
+        /^http:\/\/(?:localhost|127\.0\.0\.1):5000/,
+        "",
+      );
+
+      return `${apiBase.replace(/\/$/, "")}${uploadPath}`;
+    }
+
+    // Other complete URLs remain unchanged.
     if (
       trimmed.startsWith("http://") ||
       trimmed.startsWith("https://") ||
@@ -51,15 +74,11 @@ export function Img({
 
     // /uploads/file.jpg
     if (trimmed.startsWith("/uploads/")) {
-      const apiBase = process.env.REACT_APP_API_URL || "http://localhost:3000";
-
       return `${apiBase.replace(/\/$/, "")}${trimmed}`;
     }
 
     // uploads/file.jpg
     if (trimmed.startsWith("uploads/")) {
-      const apiBase = process.env.REACT_APP_API_URL || "http://localhost:3000";
-
       return `${apiBase.replace(/\/$/, "")}/${trimmed}`;
     }
 
