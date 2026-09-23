@@ -48,31 +48,56 @@ export async function uploadVideo(file, onProgress) {
   return data;
 }
 
-/** Modal media picker: library grid + upload new. */
+/** Modal media picker: library grid + upload new + delete media. */
 export function MediaPickerModal({ open, onClose, onSelect, kind = "image" }) {
   const { t } = useLanguage();
   const toast = useToast();
+
   const [items, setItems] = useState([]);
-  const [pagination, setPagination] = useState({ page: 1, pages: 1 });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pages: 1,
+  });
+
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [selected, setSelected] = useState(null);
+
+  const [deletingId, setDeletingId] = useState(null);
+
   const fileRef = useRef(null);
 
   const load = React.useCallback(async () => {
     if (!open) return;
+
     setLoading(true);
+
     try {
       const { data } = await api.get("/api/media", {
-        params: { page, limit: 24, kind, q: q || undefined },
+        params: {
+          page,
+          limit: 24,
+          kind,
+          q: q || undefined,
+        },
       });
-      setItems(data.items);
-      setPagination(data.pagination);
+
+      setItems(data.items || []);
+      setPagination(
+        data.pagination || {
+          page: 1,
+          pages: 1,
+        },
+      );
     } catch (err) {
-      toast.error(err.friendlyMessage);
+      toast.error(
+        err?.friendlyMessage ||
+          err?.response?.data?.error ||
+          "Failed to load media.",
+      );
     } finally {
       setLoading(false);
     }
@@ -84,31 +109,40 @@ export function MediaPickerModal({ open, onClose, onSelect, kind = "image" }) {
 
   const handleFiles = async (files) => {
     const list = Array.from(files || []);
+
     if (!list.length) return;
+
     if (kind === "image") {
       const bad = list.find((f) => !IMAGE_MIMES.includes(f.type));
+
       if (bad) {
         toast.error(t("admin.media.invalid"));
         return;
       }
+
       const big = list.find((f) => f.size > MAX_IMAGE_MB * 1024 * 1024);
+
       if (big) {
         toast.error(t("admin.media.tooLarge"));
         return;
       }
     }
+
     if (kind === "video") {
       if (!VIDEO_MIMES.includes(list[0].type)) {
         toast.error(t("admin.media.invalidVideo"));
         return;
       }
+
       if (list[0].size > MAX_VIDEO_MB * 2048 * 2048) {
         toast.error(t("admin.media.tooLarge"));
         return;
       }
     }
+
     setUploading(true);
     setProgress(0);
+
     try {
       const created =
         kind === "pdf"
@@ -116,16 +150,71 @@ export function MediaPickerModal({ open, onClose, onSelect, kind = "image" }) {
           : kind === "video"
             ? [await uploadVideo(list[0], setProgress)]
             : await uploadImages(list);
+
       toast.success(t("common.saved"));
-      if (created[0]) setSelected(created[0]);
+
+      if (created[0]) {
+        setSelected(created[0]);
+      }
+
       setPage(1);
+
       await load();
     } catch (err) {
-      toast.error(err.friendlyMessage);
+      toast.error(
+        err?.friendlyMessage || err?.response?.data?.error || "Upload failed.",
+      );
     } finally {
       setUploading(false);
       setProgress(0);
-      if (fileRef.current) fileRef.current.value = "";
+
+      if (fileRef.current) {
+        fileRef.current.value = "";
+      }
+    }
+  };
+
+  const handleDelete = async (media) => {
+    if (!media?._id || deletingId) return;
+
+    const fileName = media.originalName || media.filename || "this image";
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${fileName}"?\n\nThis action cannot be undone.`,
+    );
+
+    if (!confirmed) return;
+
+    setDeletingId(media._id);
+
+    try {
+      await api.delete(`/api/media/${media._id}`);
+
+      if (selected?._id === media._id) {
+        setSelected(null);
+      }
+
+      setItems((current) => current.filter((item) => item._id !== media._id));
+
+      toast.success("Image deleted successfully.");
+
+      await load();
+    } catch (err) {
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+
+      if (status === 409 || data?.code === "IN_USE") {
+        toast.error(
+          data?.error ||
+            "This image is currently being used on the website and cannot be deleted.",
+        );
+      } else {
+        toast.error(
+          err?.friendlyMessage || data?.error || "Failed to delete image.",
+        );
+      }
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -149,11 +238,12 @@ export function MediaPickerModal({ open, onClose, onSelect, kind = "image" }) {
           placeholder={t("common.search") + "…"}
           aria-label={t("common.search")}
         />
+
         <button
           type="button"
           className="btn btn-primary btn-sm"
           onClick={() => fileRef.current && fileRef.current.click()}
-          disabled={uploading}
+          disabled={uploading || deletingId}
         >
           {uploading
             ? kind === "video"
@@ -165,6 +255,7 @@ export function MediaPickerModal({ open, onClose, onSelect, kind = "image" }) {
                 ? t("admin.media.uploadVideo")
                 : t("admin.media.upload")}
         </button>
+
         <input
           ref={fileRef}
           type="file"
@@ -180,6 +271,7 @@ export function MediaPickerModal({ open, onClose, onSelect, kind = "image" }) {
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
+
       {loading ? (
         <Spinner />
       ) : items.length === 0 ? (
@@ -188,64 +280,157 @@ export function MediaPickerModal({ open, onClose, onSelect, kind = "image" }) {
         </div>
       ) : (
         <div className="media-grid">
-          {items.map((m) => (
-            <button
-              type="button"
-              key={m._id}
-              className={`media-cell ${selected && selected._id === m._id ? "selected" : ""}`}
-              onClick={() => setSelected(m)}
-            >
-              {m.kind === "pdf" ? (
-                <div
+          {items.map((m) => {
+            const isSelected = selected && selected._id === m._id;
+
+            const isDeleting = deletingId === m._id;
+
+            return (
+              <div
+                key={m._id}
+                className={`media-cell ${isSelected ? "selected" : ""}`}
+                style={{
+                  position: "relative",
+                }}
+              >
+                {/* Select media */}
+                <button
+                  type="button"
+                  onClick={() => setSelected(m)}
+                  disabled={isDeleting}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    aspectRatio: "1",
-                    fontSize: "2rem",
-                    background: "var(--cream-2)",
+                    display: "block",
+                    width: "100%",
+                    border: "0",
+                    padding: 0,
+                    background: "transparent",
+                    cursor: isDeleting ? "default" : "pointer",
+                    textAlign: "left",
                   }}
                 >
-                  📄
-                </div>
-              ) : m.kind === "video" ? (
-                <div
+                  {m.kind === "pdf" ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        aspectRatio: "1",
+                        fontSize: "2rem",
+                        background: "var(--cream-2)",
+                      }}
+                    >
+                      📄
+                    </div>
+                  ) : m.kind === "video" ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        aspectRatio: "1",
+                        fontSize: "2rem",
+                        background: "#14100c",
+                        color: "#fff",
+                      }}
+                    >
+                      🎬
+                    </div>
+                  ) : (
+                    <Img src={m.url} alt="" />
+                  )}
+
+                  <div className="media-name">
+                    {m.originalName || m.filename}
+                  </div>
+
+                  {m.usageCount > 0 && (
+                    <span className="media-usage">{m.usageCount}×</span>
+                  )}
+                </button>
+
+                {/* Delete button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(m);
+                  }}
+                  disabled={isDeleting || deletingId !== null}
+                  title="Delete image"
+                  aria-label={`Delete ${
+                    m.originalName || m.filename || "image"
+                  }`}
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    aspectRatio: "1",
-                    fontSize: "2rem",
-                    background: "#14100c",
+                    position: "absolute",
+                    top: 7,
+                    right: 7,
+                    width: 30,
+                    height: 30,
+                    borderRadius: "50%",
+                    border: "none",
+                    background: isDeleting
+                      ? "rgba(120,120,120,0.9)"
+                      : "rgba(179,37,30,0.95)",
                     color: "#fff",
+                    fontSize: "20px",
+                    fontWeight: 700,
+                    lineHeight: "28px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: isDeleting ? "wait" : "pointer",
+                    zIndex: 5,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
                   }}
                 >
-                  🎬
-                </div>
-              ) : (
-                <Img src={m.url} alt="" />
-              )}
-              <div className="media-name">{m.originalName || m.filename}</div>
-              {m.usageCount > 0 && (
-                <span className="media-usage">{m.usageCount}×</span>
-              )}
-            </button>
-          ))}
+                  {isDeleting ? "…" : "×"}
+                </button>
+
+                {/* Usage indicator */}
+                {m.usageCount > 0 && (
+                  <span
+                    title="This image is currently used on the website"
+                    style={{
+                      position: "absolute",
+                      left: 7,
+                      top: 7,
+                      background: "rgba(36, 31, 26, 0.88)",
+                      color: "#ffe9b8",
+                      fontSize: "0.66rem",
+                      padding: "3px 8px",
+                      borderRadius: "999px",
+                      zIndex: 4,
+                    }}
+                  >
+                    Used {m.usageCount}×
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
+
       <Pagination
         page={pagination.page}
         pages={pagination.pages}
         onChange={setPage}
       />
+
       <div className="modal-actions">
-        <button type="button" className="btn btn-light" onClick={onClose}>
+        <button
+          type="button"
+          className="btn btn-light"
+          onClick={onClose}
+          disabled={deletingId !== null}
+        >
           {t("common.cancel")}
         </button>
+
         <button
           type="button"
           className="btn btn-primary"
-          disabled={!selected}
+          disabled={!selected || deletingId !== null}
           onClick={() => {
             onSelect(selected);
             setSelected(null);

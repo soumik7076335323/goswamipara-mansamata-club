@@ -58,7 +58,7 @@ export function EventCard({ event }) {
    ========================================================= */
 
 export function PersonCard({ person, committee }) {
-  const { L, t } = useLanguage();
+  const { L, t, lang } = useLanguage();
 
   const [expanded, setExpanded] = useState(false);
 
@@ -66,15 +66,16 @@ export function PersonCard({ person, committee }) {
   const initial = name ? name.trim().charAt(0) : "?";
   const bio = L(person.bio);
 
-  /*
-   * Bio যদি যথেষ্ট বড় হয় তাহলেই
-   * "আরও পড়ুন" button দেখাবে।
-   */
   const hasMoreText = bio && bio.length > 120;
+
+  const isEnglish = lang === "en";
+
+  const readMoreText = isEnglish ? "Read more" : "আরও পড়ুন";
+
+  const showLessText = isEnglish ? "Show less" : "সংক্ষেপে দেখুন";
 
   return (
     <article className="card person-card">
-      {/* PROFILE PHOTO */}
       <div className="avatar">
         {person.photo ? (
           <Img src={person.photo} alt={name} />
@@ -85,15 +86,12 @@ export function PersonCard({ person, committee }) {
         )}
       </div>
 
-      {/* NAME */}
       <h3 className="card-title">{name}</h3>
 
-      {/* DESIGNATION */}
       {L(person.designation) && (
         <div className="role">{L(person.designation)}</div>
       )}
 
-      {/* PHONE */}
       {!committee && person.phone && (
         <div className="contact-line">
           <a
@@ -106,12 +104,10 @@ export function PersonCard({ person, committee }) {
         </div>
       )}
 
-      {/* ADDRESS */}
       {!committee && person.address && L(person.address) && (
         <div className="contact-line">📍 {L(person.address)}</div>
       )}
 
-      {/* BIO */}
       {bio && (
         <div className="person-bio-wrapper">
           <p
@@ -122,7 +118,6 @@ export function PersonCard({ person, committee }) {
             {bio}
           </p>
 
-          {/* READ MORE / SHOW LESS */}
           {hasMoreText && (
             <button
               type="button"
@@ -130,7 +125,7 @@ export function PersonCard({ person, committee }) {
               onClick={() => setExpanded((prev) => !prev)}
               aria-expanded={expanded}
             >
-              {expanded ? "সংক্ষেপে দেখুন" : "আরও পড়ুন"}
+              {expanded ? showLessText : readMoreText}
             </button>
           )}
         </div>
