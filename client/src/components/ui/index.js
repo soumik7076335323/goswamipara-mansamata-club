@@ -51,14 +51,14 @@ export function Img({
 
     // /uploads/file.jpg
     if (trimmed.startsWith("/uploads/")) {
-      const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiBase = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
       return `${apiBase.replace(/\/$/, "")}${trimmed}`;
     }
 
     // uploads/file.jpg
     if (trimmed.startsWith("uploads/")) {
-      const apiBase = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const apiBase = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
       return `${apiBase.replace(/\/$/, "")}/${trimmed}`;
     }
