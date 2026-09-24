@@ -7,9 +7,9 @@ node_modules/
 .env.local
 .env.*.local
 
-# uploads (local media) — keep the folder, ignore content
-server/uploads/*
-!server/uploads/.gitkeep
+# uploads
+!server/uploads/
+!server/uploads/*
 
 # builds
 client/build/
